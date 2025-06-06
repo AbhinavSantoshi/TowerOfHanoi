@@ -50,7 +50,7 @@ function validateConfig(config) {
 const CONFIG = {
     SCORING: {
         BASE_SCORE: 1000,
-        DIFFICULTY_MULTIPLIER: 500,
+        DIFFICULTY_MULTIPLIER: 0,
         MOVE_PENALTY: 5,
         MOVE_PENALTY_PERCENTAGE: 0.02,
         INVALID_MOVE_PENALTY: 25,
@@ -241,14 +241,17 @@ class StorageManager {
 /**
  * Score Manager - Handles all scoring logic
  */
-class ScoreManager {
-    constructor(numDisks) {
+class ScoreManager {    constructor(numDisks) {
         this.validateNumDisks(numDisks);
         this.baseScore = CONFIG.SCORING.BASE_SCORE + (numDisks * CONFIG.SCORING.DIFFICULTY_MULTIPLIER);
         this.currentScore = this.baseScore;
         this.perfectGame = true;
         this.consecutivePerfectMoves = 0;
         this.numDisks = numDisks;
+        this.bonusesApplied = {
+            perfectGame: false,
+            perfectSolution: false
+        };
     }
 
     validateNumDisks(numDisks) {
@@ -280,8 +283,7 @@ class ScoreManager {
                 if (this.consecutivePerfectMoves >= 3) {
                     this.currentScore += CONFIG.SCORING.STREAK_BONUS;
                     return 'streak'; // Signal for achievement
-                }
-            } else {
+                }            } else {
                 this.consecutivePerfectMoves = 0;
                 this.perfectGame = false;
             }
@@ -306,34 +308,35 @@ class ScoreManager {
 
         this.currentScore = Math.max(0, this.currentScore);
         return null;
-    }
-
-    calculateFinalScore(moveCount, startTime) {
+    }    calculateFinalScore(moveCount, startTime) {
         if (typeof moveCount !== 'number' || moveCount <= 0) {
             console.warn('Invalid move count for final score calculation');
             return { score: 0, efficiency: 0, isPerfectSolution: false, isPerfectGame: false };
         }
 
         const minMoves = this.getMinimumMoves();
+        let finalScore = this.currentScore;
         
-        // Perfect solution bonus
-        if (moveCount === minMoves) {
-            this.currentScore += CONFIG.SCORING.PERFECT_SOLUTION_BONUS;
+        // Perfect solution bonus - only add if not already applied
+        if (moveCount === minMoves && !this.bonusesApplied.perfectSolution) {
+            finalScore += CONFIG.SCORING.PERFECT_SOLUTION_BONUS;
+            this.bonusesApplied.perfectSolution = true;
         }
         
-        // Perfect game bonus
-        if (this.perfectGame) {
-            this.currentScore += CONFIG.SCORING.PERFECT_GAME_BONUS;
+        // Perfect game bonus - only add if not already applied
+        if (this.perfectGame && !this.bonusesApplied.perfectGame) {
+            finalScore += CONFIG.SCORING.PERFECT_GAME_BONUS;
+            this.bonusesApplied.perfectGame = true;
         }
         
         // Time bonus (max 5 minutes)
         if (startTime && typeof startTime === 'number') {
             const timeBonus = Math.max(0, 300 - Math.floor((Date.now() - startTime) / 1000));
-            this.currentScore += timeBonus;
+            finalScore += timeBonus;
         }
         
         return {
-            score: Math.max(0, this.currentScore),
+            score: Math.max(0, finalScore),
             efficiency: Math.round((minMoves / moveCount) * 100),
             isPerfectSolution: moveCount === minMoves,
             isPerfectGame: this.perfectGame
@@ -343,10 +346,19 @@ class ScoreManager {
     applyHintPenalty() {
         this.currentScore -= CONFIG.SCORING.HINT_PENALTY;
         this.currentScore = Math.max(0, this.currentScore);
+    }    getCurrentScore() {
+        return Math.max(0, this.calculateCurrentScoreWithBonuses());
     }
 
-    getCurrentScore() {
-        return Math.max(0, this.currentScore);
+    calculateCurrentScoreWithBonuses() {
+        let scoreWithBonuses = this.currentScore;
+        
+        // Add perfect game bonus if still perfect and not already applied
+        if (this.perfectGame && !this.bonusesApplied.perfectGame) {
+            scoreWithBonuses += CONFIG.SCORING.PERFECT_GAME_BONUS;
+        }
+        
+        return scoreWithBonuses;
     }
 }
 
@@ -1207,14 +1219,16 @@ class GameUI {
                 disks.forEach(disk => {
                     this.domManager.removeElement(disk);
                 });
-            });
-
-            // Render disks
+            });            // Render disks
             this.game.towers.forEach((tower, towerIndex) => {
                 const towerElement = this.domManager.elements.towers[towerIndex];
-                tower.forEach(diskSize => {
+                const towerBase = towerElement.querySelector('.tower-base');
+                
+                // Reverse the tower array to get proper stacking order (largest at bottom)
+                [...tower].reverse().forEach(diskSize => {
                     const disk = this.createDiskElement(diskSize, towerIndex);
-                    towerElement.appendChild(disk);
+                    // Insert disk before the base to ensure proper stacking
+                    towerElement.insertBefore(disk, towerBase);
                 });
             });
 
@@ -1264,14 +1278,20 @@ class GameUI {
             // Clear any existing timer first to prevent multiple timers
             this.stopTimer();
             
+            // Set start time if not already set
+            if (this.game && !this.game.startTime) {
+                this.game.startTime = Date.now();
+            }
+            
             this.timerInterval = setInterval(() => {
-                if (this.isDestroyed || !this.game || !this.game.startTime) {
+                if (this.isDestroyed || !this.game) {
                     this.stopTimer();
                     return;
                 }
                 
                 try {
-                    const elapsed = Math.floor((Date.now() - this.game.startTime) / 1000);
+                    const startTime = this.game.startTime || Date.now();
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
                     const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
                     const seconds = (elapsed % 60).toString().padStart(2, '0');
                     this.domManager.updateTextContent('timer', `${minutes}:${seconds}`);
@@ -1467,14 +1487,6 @@ window.addEventListener('unhandledrejection', (event) => {
 // Global functions for backward compatibility with HTML onclick handlers
 let gameUI;
 
-function resetGame() {
-    try {
-        if (gameUI) gameUI.resetGame();
-    } catch (error) {
-        console.error('Error in resetGame:', error);
-    }
-}
-
 function newGame() {
     try {
         if (gameUI) gameUI.initializeGame();
@@ -1496,6 +1508,66 @@ function showHint() {
         if (gameUI) gameUI.showHint();
     } catch (error) {
         console.error('Error in showHint:', error);
+    }
+}
+
+function showHelp() {
+    try {
+        const helpModal = document.getElementById('helpModal');
+        if (helpModal) {
+            helpModal.classList.add('show');
+            helpModal.style.display = 'flex';
+            
+            // Focus management for accessibility
+            const closeButton = helpModal.querySelector('.help-close-btn');
+            if (closeButton) {
+                closeButton.focus();
+            }
+            
+            // Add escape key listener for this specific modal instance
+            const handleEscapeKey = (e) => {
+                if (e.key === 'Escape') {
+                    closeHelp();
+                    document.removeEventListener('keydown', handleEscapeKey);
+                }
+            };
+            document.addEventListener('keydown', handleEscapeKey);
+            
+            // Store the escape handler for cleanup
+            helpModal._escapeHandler = handleEscapeKey;
+        }
+    } catch (error) {
+        console.error('Error in showHelp:', error);
+    }
+}
+
+function closeHelp() {
+    try {
+        const helpModal = document.getElementById('helpModal');
+        if (helpModal) {
+            helpModal.classList.remove('show');
+            
+            // Add a small delay before hiding to allow animation to complete
+            setTimeout(() => {
+                if (helpModal && !helpModal.classList.contains('show')) {
+                    helpModal.style.display = 'none';
+                }
+            }, 300);
+            
+            // Clean up escape key listener
+            if (helpModal._escapeHandler) {
+                document.removeEventListener('keydown', helpModal._escapeHandler);
+                delete helpModal._escapeHandler;
+            }
+            
+            // Return focus to help button if it exists
+            const helpButton = document.getElementById('helpBtn');
+            if (helpButton) {
+                helpButton.focus();
+            }
+        }
+    } catch (error) {
+        console.error('Error in closeHelp:', error);
     }
 }
 

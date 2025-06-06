@@ -46,15 +46,14 @@
             </div>
         </div>
 
-        <div class="towers-container" role="main" aria-label="Game towers">
-            <div class="tower" 
+        <div class="towers-container" role="main" aria-label="Game towers">            <div class="tower" 
                  data-tower="0" 
                  tabindex="0" 
                  role="group" 
                  aria-label="Tower 1 - Source tower"
                  aria-describedby="tower-0-desc">
-                <div class="tower-base"></div>
                 <div class="tower-pole"></div>
+                <div class="tower-base"></div>
                 <div id="tower-0-desc" class="sr-only">Source tower. All disks start here.</div>
             </div>
             <div class="tower" 
@@ -63,8 +62,8 @@
                  role="group" 
                  aria-label="Tower 2 - Auxiliary tower"
                  aria-describedby="tower-1-desc">
-                <div class="tower-base"></div>
                 <div class="tower-pole"></div>
+                <div class="tower-base"></div>
                 <div id="tower-1-desc" class="sr-only">Auxiliary tower. Use this to temporarily hold disks.</div>
             </div>
             <div class="tower" 
@@ -73,28 +72,14 @@
                  role="group" 
                  aria-label="Tower 3 - Destination tower"
                  aria-describedby="tower-2-desc">
-                <div class="tower-base"></div>
                 <div class="tower-pole"></div>
-                <div id="tower-2-desc" class="sr-only">Destination tower. Move all disks here to win.</div>            </div>
-        </div>
-        
-        <div class="controls">
-            <button onclick="resetGame()" id="resetBtn" aria-label="Reset current game">🔄 Reset Game</button>
+                <div class="tower-base"></div>
+                <div id="tower-2-desc" class="sr-only">Destination tower. Move all disks here to win.</div></div>
+        </div>          <div class="controls">
             <button onclick="newGame()" id="newGameBtn" aria-label="Start new game">🎮 New Game</button>
             <button onclick="toggleSound()" id="soundBtn" aria-label="Toggle sound effects">🔊 Sound: ON</button>
             <button onclick="showHint()" id="hintBtn" aria-label="Get a hint">💡 Hint</button>
-        </div>
-
-        <!-- Instructions panel for better UX -->
-        <div class="instructions-panel">
-            <h3>How to Play:</h3>
-            <ul>
-                <li><strong>Goal:</strong> Move all disks from the first tower to the last tower</li>
-                <li><strong>Rules:</strong> Only move one disk at a time, never place a larger disk on a smaller one</li>
-                <li><strong>Mouse:</strong> Drag and drop disks between towers</li>
-                <li><strong>Keyboard:</strong> Arrow keys to navigate, Space to select, Enter to move, Escape to cancel</li>
-                <li><strong>Scoring:</strong> Fewer moves and faster time = higher score!</li>
-            </ul>
+            <button onclick="showHelp()" id="helpBtn" aria-label="Show game instructions">❓ Help</button>
         </div>
     </div>
 
@@ -105,6 +90,29 @@
         <div id="achievementText">Great job!</div>
     </div>
 
-    <div class="achievement" id="achievement" role="alert" aria-live="assertive"></div>    <script src="games.js"></script>
+    <div class="achievement" id="achievement" role="alert" aria-live="assertive"></div>
+
+    <!-- Help Modal -->
+    <div class="help-modal" id="helpModal" role="dialog" aria-labelledby="help-title" aria-describedby="help-content">
+        <div class="help-modal-overlay" onclick="closeHelp()"></div>
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h3 id="help-title">❓ How to Play</h3>
+                <button class="help-close-btn" onclick="closeHelp()" aria-label="Close help">✕</button>
+            </div>
+            <div id="help-content" class="help-modal-body">
+                <ul>
+                    <li><strong>Goal:</strong> Move all disks from the first tower to the last tower</li>
+                    <li><strong>Rules:</strong> Only move one disk at a time, never place a larger disk on a smaller one</li>
+                    <li><strong>Mouse:</strong> Drag and drop disks between towers</li>
+                    <li><strong>Keyboard:</strong> Arrow keys to navigate, Space to select, Enter to move, Escape to cancel</li>
+                    <li><strong>Scoring:</strong> Fewer moves and faster time = higher score!</li>
+                    <li><strong>Tips:</strong> Plan your moves carefully and use the hint button if you get stuck</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="games.js"></script>
 </body>
 </html>
