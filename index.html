@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower of Hanoi</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Screen reader only instructions -->
+    <div class="sr-only" id="sr-instructions">
+        Tower of Hanoi game. Use arrow keys to navigate between towers, space to select a disk, enter to move it, and escape to deselect. Press H for hints.
+    </div>
+    
+    <!-- Live region for screen reader announcements -->
+    <div id="live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+    <div class="game-container">
+        <h1>🗼 Tower of Hanoi</h1>
+        
+        <div class="difficulty-selector">
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty" aria-label="Select game difficulty">
+                <option value="3">Easy (3 disks)</option>
+                <option value="4">Medium (4 disks)</option>
+                <option value="5">Hard (5 disks)</option>
+            </select>
+        </div>
+
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">Moves</div>
+                <div class="info-value" id="moves" aria-label="Number of moves">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Score</div>
+                <div class="info-value" id="score" aria-label="Current score">1000</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Best Score</div>
+                <div class="info-value" id="bestScore" aria-label="Best score">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Time</div>
+                <div class="info-value" id="timer" aria-label="Elapsed time">00:00</div>
+            </div>
+        </div>
+
+        <div class="towers-container" role="main" aria-label="Game towers">
+            <div class="tower" 
+                 data-tower="0" 
+                 tabindex="0" 
+                 role="group" 
+                 aria-label="Tower 1 - Source tower"
+                 aria-describedby="tower-0-desc">
+                <div class="tower-base"></div>
+                <div class="tower-pole"></div>
+                <div id="tower-0-desc" class="sr-only">Source tower. All disks start here.</div>
+            </div>
+            <div class="tower" 
+                 data-tower="1" 
+                 tabindex="0" 
+                 role="group" 
+                 aria-label="Tower 2 - Auxiliary tower"
+                 aria-describedby="tower-1-desc">
+                <div class="tower-base"></div>
+                <div class="tower-pole"></div>
+                <div id="tower-1-desc" class="sr-only">Auxiliary tower. Use this to temporarily hold disks.</div>
+            </div>
+            <div class="tower" 
+                 data-tower="2" 
+                 tabindex="0" 
+                 role="group" 
+                 aria-label="Tower 3 - Destination tower"
+                 aria-describedby="tower-2-desc">
+                <div class="tower-base"></div>
+                <div class="tower-pole"></div>
+                <div id="tower-2-desc" class="sr-only">Destination tower. Move all disks here to win.</div>            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="resetGame()" id="resetBtn" aria-label="Reset current game">🔄 Reset Game</button>
+            <button onclick="newGame()" id="newGameBtn" aria-label="Start new game">🎮 New Game</button>
+            <button onclick="toggleSound()" id="soundBtn" aria-label="Toggle sound effects">🔊 Sound: ON</button>
+            <button onclick="showHint()" id="hintBtn" aria-label="Get a hint">💡 Hint</button>
+        </div>
+
+        <!-- Instructions panel for better UX -->
+        <div class="instructions-panel">
+            <h3>How to Play:</h3>
+            <ul>
+                <li><strong>Goal:</strong> Move all disks from the first tower to the last tower</li>
+                <li><strong>Rules:</strong> Only move one disk at a time, never place a larger disk on a smaller one</li>
+                <li><strong>Mouse:</strong> Drag and drop disks between towers</li>
+                <li><strong>Keyboard:</strong> Arrow keys to navigate, Space to select, Enter to move, Escape to cancel</li>
+                <li><strong>Scoring:</strong> Fewer moves and faster time = higher score!</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="win-message" id="winMessage" role="dialog" aria-labelledby="win-title" aria-describedby="win-description">
+        <div id="win-title">🎉 Congratulations! 🎉</div>
+        <div class="score-display" id="finalScore" aria-label="Final score">Score: 0</div>
+        <div class="star-rating" id="starRating" aria-label="Star rating">⭐⭐⭐</div>
+        <div id="achievementText">Great job!</div>
+    </div>
+
+    <div class="achievement" id="achievement" role="alert" aria-live="assertive"></div>    <script src="games.js"></script>
+</body>
+</html>
